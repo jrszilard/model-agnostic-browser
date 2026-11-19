@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>ai-in-browser slice-2a combobox fixture</title>
+<style>
+  body { font-family: sans-serif; max-width: 480px; margin: 2rem auto; }
+  .field { margin: 1rem 0; }
+  label { display: block; margin-bottom: .25rem; font-weight: bold; }
+  .combobox-wrap { position: relative; display: inline-block; }
+  [role="combobox"] {
+    border: 1px solid #888; border-radius: 3px; padding: .35rem .6rem;
+    min-width: 200px; cursor: pointer; background: #fff; user-select: none;
+  }
+  [role="combobox"]:focus { outline: 2px solid #0078d4; }
+  [role="listbox"] {
+    position: absolute; top: 100%; left: 0; z-index: 10;
+    border: 1px solid #888; border-radius: 3px; background: #fff;
+    min-width: 200px; list-style: none; margin: 2px 0; padding: 0;
+  }
+  [role="option"] { padding: .35rem .6rem; cursor: pointer; }
+  [role="option"]:hover, [role="option"][aria-selected="true"] { background: #0078d4; color: #fff; }
+  .hidden { display: none; }
+  input[type="text"] { border: 1px solid #888; border-radius: 3px; padding: .35rem .6rem; min-width: 200px; }
+  button[type="submit"] { margin-top: 1rem; padding: .4rem 1rem; }
+  .note { color: #555; font-size: .85rem; margin-top: .5rem; }
+</style>
+</head>
+<body>
+  <h1>Combobox fixture (slice-2a live check)</h1>
+  <p class="note">
+    Gated real-Brave fixture for the slice-2a combobox executor.
+    (a) Finite custom combobox — open → read options → pick.
+    (b) Async type-ahead — executor detects typeahead, operator hands off.
+  </p>
+
+  <form id="demo-form">
+    <!-- Plain text field — mirrors the slice-1 form shape -->
+    <div class="field">
+      <label for="fullName">Full name</label>
+      <input id="fullName" name="fullName" type="text" placeholder="Your name">
+    </div>
+
+    <!-- (a) Finite custom combobox: Country -->
+    <div class="field">
+      <label id="country-label">Country</label>
+      <div class="combobox-wrap">
+        <div
+          id="country-cb"
+          role="combobox"
+          aria-haspopup="listbox"
+          aria-controls="country-lb"
+          aria-labelledby="country-label"
+          aria-expanded="false"
+          tabindex="0"
+          data-value=""
+        >Choose a country…</div>
+        <ul id="country-lb" role="listbox" aria-labelledby="country-label" class="hidden">
+          <li role="option" data-value="us">United States</li>
+          <li role="option" data-value="ca">Canada</li>
+          <li role="option" data-value="mx">Mexico</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- (b) Async type-ahead: School -->
+    <div class="field">
+      <label for="school-input">School</label>
+      <input
+        id="school-input"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-controls="school-lb"
+        aria-expanded="false"
+        autocomplete="off"
+        placeholder="Type a school…"
+      >
+      <ul id="school-lb" role="listbox" aria-label="School suggestions" class="hidden"></ul>
+    </div>
+
+    <!-- (c) Bounded React-Select-style single-select: options on open, required -->
+    <div class="field">
+      <label for="auth-input">Are you authorized to work in the US?*</label>
+      <input
+        id="auth-input"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-controls="auth-lb"
+        aria-expanded="false"
+        aria-required="true"
+        autocomplete="off"
+        readonly
+        placeholder="Select…"
+      >
+      <ul id="auth-lb" role="listbox" aria-label="Authorization" class="hidden"></ul>
+    </div>
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <script>
+    // ── (a) Finite custom combobox ──────────────────────────────────────────
+    const cb   = document.getElementById('country-cb');
+    const lb   = document.getElementById('country-lb');
+
+    function openList() {
+      lb.classList.remove('hidden');
+      cb.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeList() {
+      lb.classList.add('hidden');
+      cb.setAttribute('aria-expanded', 'false');
+    }
+
+    function pickOption(li) {
+      cb.textContent = li.textContent;
+      cb.dataset.value = li.dataset.value;
+      li.setAttribute('aria-selected', 'true');
+      Array.from(lb.querySelectorAll('[role="option"]'))
+        .filter(o => o !== li)
+        .forEach(o => o.removeAttribute('aria-selected'));
+      closeList();
+    }
+
+    cb.addEventListener('click', () => {
+      lb.classList.contains('hidden') ? openList() : closeList();
+    });
+
+    cb.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { closeList(); }
+      if (e.key === 'Enter' || e.key === ' ') {
+        lb.classList.contains('hidden') ? openList() : closeList();
+      }
+    });
+
+    lb.addEventListener('click', (e) => {
+      const li = e.target.closest('[role="option"]');
+      if (li) pickOption(li);
+    });
+
+    // Close when focus moves outside the widget
+    document.addEventListener('click', (e) => {
+      if (!cb.contains(e.target) && !lb.contains(e.target)) closeList();
+    });
+
+    // ── (b) Async type-ahead ────────────────────────────────────────────────
+    const schoolInput = document.getElementById('school-input');
+    const schoolLb    = document.getElementById('school-lb');
+
+    const SCHOOLS = [
+      'MIT', 'Stanford University', 'Harvard University',
+      'Carnegie Mellon University', 'University of Michigan',
+      'Georgia Tech', 'UC Berkeley', 'Caltech',
+    ];
+
+    let typeaheadTimer = null;
+
+    schoolInput.addEventListener('input', () => {
+      clearTimeout(typeaheadTimer);
+      const q = schoolInput.value.trim().toLowerCase();
+      if (!q) {
+        schoolLb.innerHTML = '';
+        schoolLb.classList.add('hidden');
+        schoolInput.setAttribute('aria-expanded', 'false');
+        return;
+      }
+      // Simulate async delay (e.g. network autocomplete)
+      typeaheadTimer = setTimeout(() => {
+        const matches = SCHOOLS.filter(s => s.toLowerCase().includes(q));
+        schoolLb.innerHTML = matches
+          .map(s => `<li role="option" style="padding:.35rem .6rem;cursor:pointer">${s}</li>`)
+          .join('');
+        if (matches.length) {
+          schoolLb.classList.remove('hidden');
+          schoolInput.setAttribute('aria-expanded', 'true');
+        } else {
+          schoolLb.classList.add('hidden');
+          schoolInput.setAttribute('aria-expanded', 'false');
+        }
+      }, 300);
+    });
+
+    schoolLb.addEventListener('click', (e) => {
+      const li = e.target.closest('[role="option"]');
+      if (li) {
+        schoolInput.value = li.textContent;
+        schoolLb.innerHTML = '';
+        schoolLb.classList.add('hidden');
+        schoolInput.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // ── (c) Bounded React-Select-style single-select ────────────────────────
+    const authInput = document.getElementById('auth-input');
+    const authLb    = document.getElementById('auth-lb');
+    const AUTH_OPTS = ['Yes', 'No'];
+    function renderAuth() {
+      authLb.innerHTML = AUTH_OPTS
+        .map(o => `<li role="option" style="padding:.35rem .6rem;cursor:pointer">${o}</li>`)
+        .join('');
+      authLb.classList.remove('hidden');
+      authInput.setAttribute('aria-expanded', 'true');
+    }
+    authInput.addEventListener('click', () => {
+      authLb.classList.contains('hidden') ? renderAuth() : (authLb.classList.add('hidden'), authInput.setAttribute('aria-expanded','false'));
+    });
+    authLb.addEventListener('click', (e) => {
+      const li = e.target.closest('[role="option"]');
+      if (li) {
+        authInput.value = li.textContent;
+        authLb.classList.add('hidden');
+        authInput.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // ── Submit guard — no navigation ────────────────────────────────────────
+    document.getElementById('demo-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      console.log('submit blocked (live-check fixture)');
+    });
+  </script>
+</body>
+</html>

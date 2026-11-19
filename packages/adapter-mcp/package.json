@@ -1,0 +1,14 @@
+{
+  "name": "@ai-in-browser/adapter-mcp",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@ai-in-browser/protocol": "workspace:*",
+    "@ai-in-browser/bridge-server": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.23.8"
+  }
+}

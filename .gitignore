@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+packages/extension/dist/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+.npmrc
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+
+# Local runtime output (audit logs are per-user, never committed)
+*.log
+audit/
+*.audit.jsonl
+*.jsonl
+
+# Local agent settings can contain machine-specific paths and credentials
+.claude/
+.pi/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

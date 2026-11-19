@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "ai-in-browser",
+  "version": "0.0.1",
+  "description": "Local safe browser control layer — observe, gated execute, human approval overlay.",
+  "permissions": ["tabs", "alarms"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["main-world.js"],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    }
+  ]
+}

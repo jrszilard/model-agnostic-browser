@@ -1,0 +1,14 @@
+{
+  "name": "@ai-in-browser/extension",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/content.ts src/background.ts src/main-world.ts --bundle --format=iife --outdir=dist && cp manifest.json dist/"
+  },
+  "dependencies": {
+    "@ai-in-browser/protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

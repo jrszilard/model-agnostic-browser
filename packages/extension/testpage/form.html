@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>ai-in-browser live check form</title></head>
+<body>
+  <h1>Contact form (live check)</h1>
+  <form>
+    <label for="name">Full name</label>
+    <input id="name" name="fullName" type="text">
+
+    <label for="email">Email address</label>
+    <input id="email" name="email" type="email" autocomplete="email">
+
+    <label for="msg">Message</label>
+    <textarea id="msg" name="message"></textarea>
+
+    <label for="country">Country</label>
+    <select id="country" name="country">
+      <option value="">Choose...</option>
+      <option value="us">United States</option>
+      <option value="de">Germany</option>
+    </select>
+
+    <label for="pw">Account password</label>
+    <input id="pw" name="password" type="password" autocomplete="new-password">
+
+    <button type="submit">Submit Application</button>
+  </form>
+</body>
+</html>
